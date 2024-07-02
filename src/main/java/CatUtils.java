@@ -18,7 +18,7 @@ public class CatUtils {
             String blob = new BufferedReader(new InputStreamReader
                     (new InflaterInputStream(new FileInputStream(blobFile)))).readLine();
             String content = blob.substring(blob.indexOf("\0") + 1);
-            System.out.println(content);
+            System.out.print(content);
         }catch(IOException e){
             throw new RuntimeException(e);
         }
