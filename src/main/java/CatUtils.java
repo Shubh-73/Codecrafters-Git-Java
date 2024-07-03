@@ -1,6 +1,8 @@
 import java.io.*;
 import java.util.zip.InflaterInputStream;
 
+
+
 public class CatUtils {
 
     private CatUtils(){
@@ -17,6 +19,10 @@ public class CatUtils {
         try {
             String blob = new BufferedReader(new InputStreamReader
                     (new InflaterInputStream(new FileInputStream(blobFile)))).readLine();
+
+            //to convert a stream of characters into a string, we require BufferedReader
+            //BufferedReader takes a Reader object as input, therefore we require InputStreamReader to convert the stream
+            //of input into a reader. We intend to stream a file, therefore
             String content = blob.substring(blob.indexOf("\0") + 1);
             System.out.print(content);
         }catch(IOException e){
