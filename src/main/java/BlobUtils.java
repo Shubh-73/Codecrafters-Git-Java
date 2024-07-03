@@ -17,7 +17,7 @@ public class BlobUtils {
             String contentOfFile = Files.readString(fileToStore.toPath());
 
             int sizeOfContent = contentOfFile.getBytes().length;
-            String blobContent = "blob" + sizeOfContent + "\0" + contentOfFile;
+            String blobContent = "blob " + sizeOfContent + "\0" + contentOfFile;  // Fixed the space after "blob"
             MessageDigest digest = MessageDigest.getInstance("SHA-1");
 
             byte[] hashOfBlob = digest.digest(blobContent.getBytes());
@@ -26,11 +26,16 @@ public class BlobUtils {
             String blobFolderaName = blobHash.substring(0, 2);
             String blobFileName = blobHash.substring(2);
 
-            byte[] output = new byte[100];
+            byte[] output = new byte[blobContent.getBytes().length + 100];  // Adjusted buffer size
             Deflater compressor = new Deflater();
             compressor.setInput(blobContent.getBytes());
             compressor.finish();
-            compressor.deflate(output);
+            int compressedDataLength = compressor.deflate(output);
+
+            byte[] finalOutput = new byte[compressedDataLength];
+            System.arraycopy(output, 0, finalOutput, 0, compressedDataLength);
+
+
 
             File objects = new File(".git/objects");
             File blobFolder = new File(objects, blobFolderaName);
