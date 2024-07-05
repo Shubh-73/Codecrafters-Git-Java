@@ -33,7 +33,7 @@ public class Main {
        case "ls-tree" -> {
          TreeGitUtils treeGitUtils = new TreeGitUtils();
          if(!TreeGitUtils.readTree(args.length, args)){
-           System.exit(1);
+           System.exit(0);
          }
 
        }
