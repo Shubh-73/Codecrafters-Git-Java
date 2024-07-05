@@ -70,6 +70,7 @@ public class TreeGitUtils {
 
         int treeSize = Integer.parseInt(new String(treeBytes));
         System.err.println("treeSize: " + treeSize);
+        System.err.println("treeStartIndex: " + treeStartIndex);
 
         List<TreeNode> treeEntries = (List<TreeNode>) readTreeNodeEntries(byteBuffer, treeNullDelimiterIndex);
 

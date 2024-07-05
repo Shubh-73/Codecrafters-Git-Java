@@ -30,6 +30,22 @@ public class Main {
        case "hash-object" -> {
          BlobUtils.createBlobObject(args[2]);
        }
+       case "ls-tree" -> {
+         try {
+           if (args.length == 3) {
+             String content = TreeGitUtils.readTree(args[2], args[1]);
+             System.out.println(content);
+           } else if (args.length == 2) {
+             String content = TreeGitUtils.readTree(args[1]);
+             System.out.println(content);
+
+           }
+         }
+         catch (IOException e) {
+           throw new RuntimeException(e);
+         }
+
+       }
 
        default -> System.out.println("Unknown command: " + command);
      }
