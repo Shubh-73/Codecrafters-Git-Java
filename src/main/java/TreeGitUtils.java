@@ -57,41 +57,37 @@ public class TreeGitUtils {
 
         ArrayList<String> treeContent = new ArrayList<>();
 
-        try{
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new InflaterInputStream(
-                    new FileInputStream(file)
-            )));
+        try (BufferedReader bufferedReader = new BufferedReader(new
+                InputStreamReader(new InflaterInputStream(new FileInputStream(file))))) {
             int data;
             while ((data = bufferedReader.read()) != -1) {
-                if(data == 0){
+                if (data == 0) {
                     break;
                 }
-
             }
-            StringBuilder content = new StringBuilder();
-            boolean firstFlag = true;
-            while((data = bufferedReader.read()) != -1){
-                content.append((char) data);
 
+            StringBuilder content = new StringBuilder();
+            while ((data = bufferedReader.read()) != -1) {
+                content.append((char) data);
             }
 
             String[] splitByModes = content.toString().split("100644|040000|100755|120000|40000");
 
-            for(String splitByMode : splitByModes){
+            for (String splitByMode : splitByModes) {
                 String[] res = splitByMode.split("\0");
-                String trimmedData = res[0];
+                String trimmedData = res[0].trim();
 
-                if(!trimmedData.isBlank()) treeContent.add(trimmedData);
+                if (!trimmedData.isEmpty()) {
+                    treeContent.add(trimmedData);
+                }
             }
 
-            bufferedReader.close();
             Collections.sort(treeContent);
 
             for (String str : treeContent) {
-                System.out.println(str + "\n");
+                System.out.print(str + "\n");
             }
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
