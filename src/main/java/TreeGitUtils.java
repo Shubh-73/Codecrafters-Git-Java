@@ -1,12 +1,12 @@
 import javax.print.DocFlavor;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.zip.InflaterInputStream;
 
 public class TreeGitUtils {
 
@@ -45,70 +45,56 @@ public class TreeGitUtils {
      *
      */
 
-    public static boolean readTree( int argc, String[] argv) throws IOException {
+    public static void readTree( String[] argv) throws IOException {
 
-        String flag = "";
-        String treeSha;
+        String treeSha = argv[2];
+        String treeDirectory = treeSha.substring(0,2);
 
-        if (argc <= 2){
-            System.err.println("Invalid Arguments");
-            return false;
-        }
+        String treeHash = treeSha.substring(2);
 
-        if (argc == 3){
-            treeSha = argv[2];
-        }
-        else {
-            treeSha = argv[3];
-            flag = argv[2];
-        }
+        String filePath = ".git/objects/" + treeDirectory + "/" + treeHash;
+        File file = new File(filePath);
 
-        if (!flag.isEmpty() && !flag.equals("--name-only")){
-            System.err.println("Invalid Arguments");
-            return false;
-        }
+        ArrayList<String> treeContent = new ArrayList<>();
 
-        String directoryName = treeSha.substring(0, 2);
-        String fileName = treeSha.substring(2);
+        try{
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new InflaterInputStream(
+                    new FileInputStream(file)
+            )));
+            int data;
+            while ((data = bufferedReader.read()) != -1) {
+                if(data == 0){
+                    break;
+                }
 
-        String path = "./git/objects/" + directoryName + "/" + fileName;
-        File file = new File(path);
-
-        if (!file.exists()){
-            System.err.println("File does not exist");
-            return false;
-        }
-
-        String treeData = Commons.readFile(file);
-        if (treeData == null){
-            return false;
-        }
-
-        StringBuilder buff = new StringBuilder();
-        if(!Commons.decompressObject(buff, treeData)){
-            return false;
-        }
-
-        String trimmedData = buff.substring(buff.indexOf("\0") + 1);
-        List<String> names = new ArrayList<>();
-
-        String line;
-        do{
-            line = trimmedData.substring(0, trimmedData.indexOf("\0"));
-            if (line.startsWith("40000")){
-                names.add(line.substring(6));
             }
-            else {
-                names.add(line.substring(7));
-            }
-            trimmedData = trimmedData.substring(trimmedData.indexOf("\0") + 21);
-        } while (trimmedData.length() > 1);
+            StringBuilder content = new StringBuilder();
+            boolean firstFlag = true;
+            while((data = bufferedReader.read()) != -1){
+                content.append((char) data);
 
-        Collections.sort(names);
-        for (String name : names){
-            System.out.println(name);
+            }
+
+            String[] splitByModes = content.toString().split("100644|040000|100755|120000|40000");
+
+            for(String splitByMode : splitByModes){
+                String[] res = splitByMode.split("\0");
+                String trimmedData = res[0];
+
+                if(!trimmedData.isBlank()) treeContent.add(trimmedData);
+            }
+
+            bufferedReader.close();
+            Collections.sort(treeContent);
+
+            for (String str : treeContent) {
+                System.out.println(str);
+            }
         }
-        return true;
+        catch (IOException e){
+            throw new RuntimeException(e);
+        }
+
 
     }
 
