@@ -88,7 +88,7 @@ public class TreeGitUtils {
             Collections.sort(treeContent);
 
             for (String str : treeContent) {
-                System.out.println(str);
+                System.out.print(str);
             }
         }
         catch (IOException e){
