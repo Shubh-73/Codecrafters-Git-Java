@@ -1,45 +1,44 @@
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.zip.InflaterInputStream;
 
 public class Commons {
 
-    static byte[] readGitObject(String shaCode) throws IOException {
-        String directoryName = shaCode.substring(0, 2);
-        String fileName = shaCode.substring(2);
 
-        /**
-         * The function is taking SHA-1 hexadecimal value in form of a String.
-         *
-         * The SHA-1 (secure hash algorithm 1) is a cryptographic algorithm that produces 160 bit(20 byte) hash value,
-         * which is commonly rendered as a 40-digit hexadecimal value.
-         *
-         * In git file system, first 2 digit correspond to the name of the directory of the file.
-         * The rest of the hashcode represents the name of the file.
-         */
 
-        File objectDirectory = new File(".git/objects/" +directoryName);
-        /**
-         * File is created with the address of directory. This file will further store the blob objects as files.
-         * File can be instantiated with single String parameter to specify the address of the file. Also, it can be
-         * instantiated providing two string arguments specifying parent directory and the file's directory.
-         */
-        if (!objectDirectory.exists()) {
-            System.out.println("Object directory does not exist");
-            System.exit(1);
+    public static String readFile(File file) {
+        try(FileInputStream fileInputStream = new FileInputStream(file);
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()){
+
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                byteArrayOutputStream.write(buffer, 0, bytesRead);
+            }
+            return byteArrayOutputStream.toString();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
+    }
 
-        File file = new File(objectDirectory, fileName);
+    public static boolean decompressObject(StringBuilder output, String data){
+        try(ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data.getBytes());
+            InflaterInputStream inflaterInputStream = new InflaterInputStream(byteArrayInputStream)){
+            byte[] buffer = new byte[1024];
+            int bytesRead;
 
-        Path content = Files.createTempFile("git-object-content", ".txt");
-
-        /**
-         * as the challenge required to provide a decompressed file, the ZlibUtil class is used to decompress the file
-         * and returns byte array.
-         */
-        return ZlibUtil.decompressFile(file);
-
+            while ((bytesRead = inflaterInputStream.read(buffer)) != -1) {
+                output.append(new String(buffer, 0, bytesRead));
+            }
+            return true;
+        }
+        catch(IOException e){
+            e.printStackTrace();
+            return false;
+        }
 
     }
 }

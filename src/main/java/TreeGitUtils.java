@@ -1,6 +1,9 @@
+import javax.print.DocFlavor;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,122 +45,72 @@ public class TreeGitUtils {
      *
      */
 
-    public static String readTree(String treeSha, String... flags) throws IOException {
+    public static boolean readTree( int argc, String[] argv) throws IOException {
 
+        String flag = "";
+        String treeSha;
 
-        byte[] rawContent = Commons.readGitObject(treeSha);
-        //readGitObject is a static method in Commons class for providing a decompressed byte array of git files
-
-        ByteBuffer byteBuffer = ByteBuffer.wrap(rawContent);
-        byte[] objectName = new byte[4];
-        byteBuffer.get(0,objectName,0,4);
-
-
-        if(!new String(objectName).equals("tree")) {
-            System.err.println("Not a tree");
-            System.exit(1);
+        if (argc <= 2){
+            System.err.println("Invalid Arguments");
+            return false;
         }
 
-        System.err.println("rawContent: " + new String(rawContent));
-        System.err.println("rawContent.length: " + rawContent.length);
-
-        int treeStartIndex = 5;
-
-        int treeNullDelimiterIndex = findNullDelimiter(byteBuffer, treeStartIndex);
-
-        byte[] treeBytes = new byte[treeNullDelimiterIndex - treeStartIndex];
-        byteBuffer.get(treeStartIndex,treeBytes);
-
-        int treeSize = Integer.parseInt(new String(treeBytes));
-        System.err.println("treeSize: " + treeSize);
-        System.err.println("treeStartIndex: " + treeStartIndex);
-
-        List<TreeNode> treeEntries = (List<TreeNode>) readTreeNodeEntries(byteBuffer, treeNullDelimiterIndex);
-
-        if(List.of(flags).contains("--name-only")){
-            return treeEntries.stream()
-                    .map(iterator -> iterator.name)
-                    .collect(Collectors.joining("\n"));
+        if (argc == 3){
+            treeSha = argv[2];
+        }
+        else {
+            treeSha = argv[3];
+            flag = argv[2];
         }
 
+        if (!flag.isEmpty() && !flag.equals("--name-only")){
+            System.err.println("Invalid Arguments");
+            return false;
+        }
 
-        return treeEntries.stream().map(
-                iterator -> "%06d %s %s     %s".formatted(iterator.mode, gitObjectType(iterator.mode),
-                        HexFormat.of().formatHex(iterator.sha), iterator.name)
-        ).collect(Collectors.joining("\n"));
+        String directoryName = treeSha.substring(0, 2);
+        String fileName = treeSha.substring(2);
 
+        String path = "./git/objects/" + directoryName + "/" + fileName;
+        File file = new File(path);
 
+        if (!file.exists()){
+            System.err.println("File does not exist");
+            return false;
+        }
+
+        String treeData = Commons.readFile(file);
+        if (treeData == null){
+            return false;
+        }
+
+        StringBuilder buff = new StringBuilder();
+        if(!Commons.decompressObject(buff, treeData)){
+            return false;
+        }
+
+        String trimmedData = buff.substring(buff.indexOf("\0") + 1);
+        List<String> names = new ArrayList<>();
+
+        String line;
+        do{
+            line = trimmedData.substring(0, trimmedData.indexOf("\0"));
+            if (line.startsWith("40000")){
+                names.add(line.substring(6));
+            }
+            else {
+                names.add(line.substring(7));
+            }
+            trimmedData = trimmedData.substring(trimmedData.indexOf("\0") + 21);
+        } while (trimmedData.length() > 1);
+
+        Collections.sort(names);
+        for (String name : names){
+            System.out.println(name);
+        }
+        return true;
 
     }
 
-    private static String gitObjectType(int mode){
-        if(mode == 40000){
-            return "tree";
-        }
-        else if(mode == 100644){
-            return "blob";
-        }
 
-        return "not specified";
-    }
-
-    static class TreeNode{
-        int mode;
-        String name;
-        byte[] sha;
-        int entrySize;
-        public TreeNode(int mode, String name, byte[] sha, int entrySize){
-
-            this.mode = mode;
-            this.name = name;
-            this.sha = sha;
-            this.entrySize = entrySize;
-
-        }
-
-        @Override
-        public String toString(){
-            return "TreeNode{"
-                    + "mode=" + mode + ", name='" + name + '\'' +
-                    ", sha=" + HexFormat.of().formatHex(sha) +
-                    ", entrySize=" + entrySize + '}';
-        }
-    }
-
-    private static int findNullDelimiter(ByteBuffer byteBuffer, int index) {
-        int currentIndex = index;
-        while(byteBuffer.hasRemaining() && byteBuffer.get(currentIndex) != '\0'){
-            currentIndex++;
-        }
-        return currentIndex;
-    }
-
-    private static TreeNode readTreeNodeEntries(ByteBuffer byteBuffer, int startIndex){
-        int entryNullDelimiter = findNullDelimiter(byteBuffer, startIndex);
-        byte[] modeAndNameBytes = new byte[entryNullDelimiter - startIndex];
-        byteBuffer.get(startIndex,modeAndNameBytes);
-        String modeAndName = new String(modeAndNameBytes);
-
-
-        int mode = Integer.parseInt(modeAndName.split(" ")[0]);
-        String name = modeAndName.split(" ")[1];
-        byte[] sha = new byte[20];
-        byteBuffer.get(entryNullDelimiter + 1,sha);
-
-        return new TreeNode(mode, name, sha,modeAndNameBytes.length + 1 + 20);
-    }
-
-    private static List<TreeNode> readTreeNodes(ByteBuffer byteBuffer, int treeNullDelimiterIndex){
-        List<TreeNode> treeNodes = new ArrayList<>();
-
-        int startIndex = treeNullDelimiterIndex + 1;
-        while(startIndex < byteBuffer.limit()){
-            TreeNode treeNode = readTreeNodeEntries(byteBuffer, startIndex);
-            treeNodes.add(treeNode);
-            startIndex = startIndex + treeNode.entrySize + 1;
-
-        }
-
-        return treeNodes;
-    }
 }
