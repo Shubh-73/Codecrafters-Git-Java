@@ -45,15 +45,10 @@ public class Main {
 
        }
        case "write-tree" -> {
-         File dir;
-         if (args.length > 1) {
-           dir = new File(args[1]);
-         } else {
-           dir = new File(".");
-         }
+         File dir = new File(".");
          byte[] sha = TreeGitUtils.writeTree(dir);
          if (sha != null) {
-           System.out.println(BlobUtils.toHexSHA(sha));
+           System.out.println("Tree SHA-1: " + BlobUtils.toHexSHA(sha));
          }
 
        }
