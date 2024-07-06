@@ -73,6 +73,9 @@ public class GitCloneUtils {
             connection.setRequestProperty("User-Agent", "GitCloneClient");
             connection.setRequestProperty("Content-Type", "application/x-git-upload-pack-request");
 
+            // Set this to true to enable output (POST data)
+            connection.setDoOutput(true);
+
             // Construct request body for Git clone
             OutputStream out = connection.getOutputStream();
             String request = "001e" + gitProtocolInfo.substring(4) + "0000";
