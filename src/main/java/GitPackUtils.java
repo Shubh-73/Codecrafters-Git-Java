@@ -22,6 +22,9 @@ public class GitPackUtils {
                 System.out.println("Pack file content: ");
                 printPackFileContent(bis, packFile.length());
 
+                // Reset the stream to read from the beginning again
+                bis.reset();
+
                 for (int i = 0; i < totalObjects; i++) {
                     long objectOffset = readObjectHeader(bis);
                     extractObject(bis, targetDir, objectOffset);
@@ -69,7 +72,7 @@ public class GitPackUtils {
 
         while ((headerByte & 0x80) != 0) {
             objectOffset++;
-            objectOffset <<= 8;
+            objectOffset <<= 7; // Changed from 8 to 7
             objectOffset |= (headerByte & 0x7f);
             headerByte = bis.read();
         }
