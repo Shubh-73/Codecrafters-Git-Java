@@ -104,13 +104,13 @@ public class TreeGitUtils {
 
             for (String splitByMode : splitByModes) {
                 String[] res = splitByMode.split("\0");
-                String trimmedData = res[0];
+                String trimmedData = res[0].trim();  // Trim whitespace
 
                 if (!trimmedData.isBlank()) {
                     if (nameOnly) {
                         treeContent.add(trimmedData);
                     } else {
-                        treeContent.add(splitByMode);
+                        treeContent.add(splitByMode.trim());  // Trim whitespace
                     }
                 }
             }
@@ -119,7 +119,7 @@ public class TreeGitUtils {
             Collections.sort(treeContent);
 
             for (String str : treeContent) {
-                System.out.print(str + "\n");
+                System.out.println(str);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
