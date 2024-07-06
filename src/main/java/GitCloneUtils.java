@@ -82,7 +82,7 @@ public class GitCloneUtils {
 
             // Ensure the request string has an even number of characters
             if (request.length() % 2 != 0) {
-                throw new IllegalArgumentException("Hex string must have even number of characters");
+                request += "0"; // Add an extra '0' to make the length even
             }
 
             out.write(hexStringToByteArray(request));
