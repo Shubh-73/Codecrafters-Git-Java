@@ -98,132 +98,71 @@ public class TreeGitUtils {
     }
 
     public static byte[] writeTree(File dir) {
-
         try {
-
+            // Filter out .git directory
             File[] files = dir.listFiles(new FilenameFilter() {
-
                 @Override
-
                 public boolean accept(File dir, String name) {
-
                     return !name.equals(".git");
-
                 }
-
             });
 
+            // Sort files for consistent order
             Arrays.sort(files);
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+            // Process each file and directory
             for (File file : files) {
-
                 if (file.isFile()) {
-
+                    // Create blob object for file and get its SHA-1 hash
                     byte[] sha = BlobUtils.createBlobObject(file.getAbsolutePath());
 
-                    buffer.write(("100644 " + file.getName() + "\0")
-
-                            .getBytes());
-
+                    // Write file mode, name, and SHA to buffer
+                    buffer.write(("100644 " + file.getName() + "\0").getBytes());
                     buffer.write(sha);
-
                 } else {
-
+                    // Recursively process directory and get its SHA-1 hash
                     byte[] sha = writeTree(file);
 
-                    buffer.write(("40000 " + file.getName() + "\0")
-
-                            .getBytes());
-
+                    // Write directory mode, name, and SHA to buffer
+                    buffer.write(("40000 " + file.getName() + "\0").getBytes());
                     buffer.write(sha);
-
                 }
-
             }
 
             byte[] treeItems = buffer.toByteArray();
+            byte[] treeHeader = ("tree " + treeItems.length + "\0").getBytes();
 
-            byte[] treeHeader =
-
-                    ("tree " + treeItems.length + "\0").getBytes();
-
-            ByteBuffer combined = ByteBuffer.allocate(
-
-                    treeHeader.length + treeItems.length);
-
+            ByteBuffer combined = ByteBuffer.allocate(treeHeader.length + treeItems.length);
             combined.put(treeHeader);
-
             combined.put(treeItems);
 
             byte[] treeContent = combined.array();
 
-            byte[] treeSHA = toBinarySHA(treeContent);
+            // Compute SHA-1 hash of the tree content
+            byte[] treeSHA = BlobUtils.toBinarySHA(treeContent);
 
-            String treePath = shaToPath(toHexSHA(treeSHA));
+            // Convert binary SHA to hex string for path
+            String treePath = BlobUtils.shaToPath(BlobUtils.toHexSHA(treeSHA));
 
+            // Ensure parent directories exist
             File blobFile = new File(treePath);
-
             blobFile.getParentFile().mkdirs();
 
-            DeflaterOutputStream out = new DeflaterOutputStream(
+            // Write compressed tree content to file
+            try (DeflaterOutputStream out = new DeflaterOutputStream(new FileOutputStream(blobFile))) {
+                out.write(treeContent);
+            }
 
-                    new FileOutputStream(blobFile));
-
-            out.write(treeContent);
-
-            out.close();
+            // Return binary SHA-1 hash
             return treeSHA;
 
-        }
-        catch (IOException e) {
-
+        } catch (IOException e) {
             e.printStackTrace();
-
         }
         return null;
     }
 
-    public static String shaToPath(String sha) {
-
-        return String.format(".git/objects/%s/%s", sha.substring(0, 2),
-
-                sha.substring(2));
-
-    }
-
-    public static String toHexSHA(byte[] data) {
-
-        StringBuilder sb = new StringBuilder();
-
-        for (byte b : data) {
-
-            sb.append(String.format("%02x", b));
-
-        }
-
-        return sb.toString();
-
-    }
-
-    public static byte[] toBinarySHA(byte[] data) {
-
-        byte[] sha = null;
-
-        try {
-
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-
-            sha = md.digest(data);
-
-        } catch (NoSuchAlgorithmException e) {
-
-            e.printStackTrace();
-
-        }
-
-        return sha;
-
-    }
 
 
     private static byte[] compress(String str) throws IOException {
@@ -234,9 +173,6 @@ public class TreeGitUtils {
             return bos.toByteArray();
         }
     }
-
-
-
 
 
 

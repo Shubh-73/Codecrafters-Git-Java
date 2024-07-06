@@ -1,7 +1,4 @@
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -15,73 +12,57 @@ public class BlobUtils {
         throw new IllegalStateException("Utility class");
     }
 
-    public static byte[] createBlobObject(String filePath){
+    public static byte[] createBlobObject(String filePath) {
         try {
-
-            byte[] fileContent = Files.readAllBytes(Path.of(filePath));
-
+            File file = new File(filePath);
+            byte[] content = new byte[(int) file.length()];
+            try (FileInputStream fis = new FileInputStream(file)) {
+                fis.read(content);
+            }
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-            buffer.write("blob".getBytes());
-
-            buffer.write(" ".getBytes());
-
-            buffer.write(String.valueOf(fileContent.length).getBytes());
-
-            buffer.write(0);
-
-            buffer.write(fileContent);
-
+            buffer.write(("blob " + content.length + "\0").getBytes());
+            buffer.write(content);
             byte[] blobContent = buffer.toByteArray();
+            byte[] sha = toBinarySHA(blobContent);
 
-            byte[] blobSHA = TreeGitUtils.toBinarySHA(blobContent);
-
-            String blobPath = TreeGitUtils.shaToPath(TreeGitUtils.toHexSHA(blobSHA));
+            String blobPath = shaToPath(toHexSHA(sha));
 
             File blobFile = new File(blobPath);
-
             blobFile.getParentFile().mkdirs();
 
-            DeflaterOutputStream out = new DeflaterOutputStream(new FileOutputStream(blobFile));
+            try (DeflaterOutputStream out = new DeflaterOutputStream(new FileOutputStream(blobFile))) {
+                out.write(blobContent);
+            }
 
-            out.write(blobContent);
-
-            out.close();
-            return blobSHA;
+            return sha;
 
         } catch (IOException e) {
-
             e.printStackTrace();
-
         }
-
         return null;
-
     }
 
-    public static String bytesToHex(byte[] hash) {
-        StringBuilder hexString = new StringBuilder(2 * hash.length);
-        for(byte b : hash) {
-            String hex = Integer.toHexString(0xff & b);
-            if(hex.length() == 1) hexString.append('0');
-            hexString.append(hex);
-
-        }
-        return hexString.toString();
+    public static String shaToPath(String sha) {
+        return String.format(".git/objects/%s/%s", sha.substring(0, 2), sha.substring(2));
     }
 
-    public static String hexToBinary(String hex){
-        StringBuilder binary  = new StringBuilder();
-
-        for(char hexChar : hex.toCharArray()){
-            String bin = Integer.toBinaryString(Character.digit(hexChar, 16));
-
-            while (bin.length() < 4){
-                bin = "0" + bin;
-            }
-            binary.append(bin);
+    public static String toHexSHA(byte[] data) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : data) {
+            sb.append(String.format("%02x", b));
         }
-        return binary.toString();
+        return sb.toString();
+    }
+
+    public static byte[] toBinarySHA(byte[] data) {
+        byte[] sha = null;
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            sha = md.digest(data);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return sha;
     }
 
     /*
