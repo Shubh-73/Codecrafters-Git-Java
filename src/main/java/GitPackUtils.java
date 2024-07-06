@@ -72,7 +72,7 @@ public class GitPackUtils {
 
         while ((headerByte & 0x80) != 0) {
             objectOffset++;
-            objectOffset <<= 7; // Changed from 8 to 7
+            objectOffset <<= 7; // Adjusted from 8 to 7 as per previous observation
             objectOffset |= (headerByte & 0x7f);
             headerByte = bis.read();
         }
