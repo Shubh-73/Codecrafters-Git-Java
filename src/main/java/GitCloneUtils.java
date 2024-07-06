@@ -33,16 +33,14 @@ public class GitCloneUtils {
                 // Read response to get Git protocol info
                 BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 String line;
-                String gitProtocolInfo = null;
+                StringBuilder gitProtocolInfoBuilder = new StringBuilder();
                 while ((line = reader.readLine()) != null) {
-                    if (line.startsWith("001e# service=git-upload-pack")) {
-                        gitProtocolInfo = line;
-                        break;
-                    }
+                    gitProtocolInfoBuilder.append(line).append("\n");
                 }
                 reader.close();
 
-                if (gitProtocolInfo != null) {
+                String gitProtocolInfo = gitProtocolInfoBuilder.toString();
+                if (!gitProtocolInfo.isEmpty()) {
                     // Clone using Git protocol info
                     cloneWithGitProtocol(repoUrl, targetDir, gitProtocolInfo);
                 } else {
@@ -78,8 +76,8 @@ public class GitCloneUtils {
 
             // Construct request body for Git clone
             OutputStream out = connection.getOutputStream();
-            String request = "001e" + gitProtocolInfo.substring(4) + "0000";
-            out.write(hexStringToByteArray(request));
+            String request = "0032want " + gitProtocolInfo.substring(4).trim() + "\n00000009done\n";
+            out.write(request.getBytes());
             out.flush();
             out.close();
 
