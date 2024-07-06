@@ -1,9 +1,13 @@
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
 
 public class BlobUtils {
 
@@ -11,47 +15,48 @@ public class BlobUtils {
         throw new IllegalStateException("Utility class");
     }
 
-    public static String createBlobObject(String filePath){
-        try{
-            File fileToStore = new File(filePath);
-            String contentOfFile = Files.readString(fileToStore.toPath());
+    public static byte[] createBlobObject(String filePath){
+        try {
 
-            int sizeOfContent = contentOfFile.getBytes().length;
-            String blobContent = "blob " + sizeOfContent + "\0" + contentOfFile;  // Fixed the space after "blob"
-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            byte[] fileContent = Files.readAllBytes(Path.of(filePath));
 
-            byte[] hashOfBlob = digest.digest(blobContent.getBytes());
-            String blobHash = bytesToHex(hashOfBlob);
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
-            String blobFolderaName = blobHash.substring(0, 2);
-            String blobFileName = blobHash.substring(2);
+            buffer.write("blob".getBytes());
 
-            byte[] output = new byte[blobContent.getBytes().length + 100];  // Adjusted buffer size
-            Deflater compressor = new Deflater();
-            compressor.setInput(blobContent.getBytes());
-            compressor.finish();
-            int compressedDataLength = compressor.deflate(output);
+            buffer.write(" ".getBytes());
 
-            byte[] finalOutput = new byte[compressedDataLength];
-            System.arraycopy(output, 0, finalOutput, 0, compressedDataLength);
+            buffer.write(String.valueOf(fileContent.length).getBytes());
 
+            buffer.write(0);
 
+            buffer.write(fileContent);
 
-            File objects = new File(".git/objects");
-            File blobFolder = new File(objects, blobFolderaName);
-            blobFolder.mkdirs();
-            File blobFile = new File(blobFolder, blobFileName);
-            blobFile.createNewFile();
-            Files.write(blobFile.toPath(), output);
-            System.out.println(blobHash);
-            return blobHash;
+            byte[] blobContent = buffer.toByteArray();
 
-        }
-        catch (IOException | NoSuchAlgorithmException e){
+            byte[] blobSHA = TreeGitUtils.toBinarySHA(blobContent);
+
+            String blobPath = TreeGitUtils.shaToPath(TreeGitUtils.toHexSHA(blobSHA));
+
+            File blobFile = new File(blobPath);
+
+            blobFile.getParentFile().mkdirs();
+
+            DeflaterOutputStream out = new DeflaterOutputStream(new FileOutputStream(blobFile));
+
+            out.write(blobContent);
+
+            out.close();
+            return blobSHA;
+
+        } catch (IOException e) {
 
             e.printStackTrace();
-            return null;
+
         }
+
+        return null;
+
     }
 
     public static String bytesToHex(byte[] hash) {

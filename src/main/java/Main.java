@@ -38,8 +38,7 @@ public class Main {
        case "write-tree" -> {
 
 
-         String treeSha = TreeGitUtils.writeTree(args[0]);
-         System.out.println(treeSha);
+
        }
 
        default -> System.out.println("Unknown command: " + command);
