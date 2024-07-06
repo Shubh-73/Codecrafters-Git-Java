@@ -93,6 +93,11 @@ public class GitCloneUtils {
                     while ((bytesRead = in.read(buffer)) != -1) {
                         fos.write(buffer, 0, bytesRead);
                     }
+
+                    // Log the pack file content for debugging
+                    fos.flush();
+                    byte[] packFileContent = Files.readAllBytes(packFile.toPath());
+                    System.out.println("Pack file content: " + new String(packFileContent));
                 }
 
                 // Unpack Git pack file to create local repository
