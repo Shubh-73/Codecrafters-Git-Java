@@ -7,24 +7,28 @@ import java.util.zip.DeflaterOutputStream;
 public class BlobUtils {
     public static byte[] createBlobObject(String filePath) {
         try {
-            System.out.println("Reading file: " + filePath); // Debug print
+            // Read file content
             byte[] fileContent = Files.readAllBytes(new File(filePath).toPath());
-            System.out.println("File content read: " + fileContent.length + " bytes"); // Debug print
 
+            // Prepare blob content with header
             String blobHeader = "blob " + fileContent.length + "\0";
             ByteArrayOutputStream blobStream = new ByteArrayOutputStream();
             blobStream.write(blobHeader.getBytes());
             blobStream.write(fileContent);
             byte[] blobContent = blobStream.toByteArray();
 
+            // Compute SHA-1 hash of the blob content
             byte[] sha = toBinarySHA(blobContent);
-            System.out.println("SHA-1: " + toHexSHA(sha)); // Debug print
 
+            // Convert binary SHA to hex string for path
             String shaHex = toHexSHA(sha);
             String blobPath = shaToPath(shaHex);
+
+            // Ensure parent directories exist
             File blobFile = new File(blobPath);
             blobFile.getParentFile().mkdirs();
 
+            // Write compressed blob content to file
             try (DeflaterOutputStream out = new DeflaterOutputStream(new FileOutputStream(blobFile))) {
                 out.write(blobContent);
             }
@@ -36,7 +40,6 @@ public class BlobUtils {
         }
         return null;
     }
-
 
     public static String shaToPath(String sha) {
         return String.format(".git/objects/%s/%s", sha.substring(0, 2), sha.substring(2));
