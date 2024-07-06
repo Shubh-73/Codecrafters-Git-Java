@@ -36,7 +36,7 @@ public class Main {
 
        }
        case "write-tree" -> {
-         File dir = new File("path_to_directory");
+         File dir = new File(args[1]);
          byte[] sha = TreeGitUtils.writeTree(dir);
          if (sha != null) {
            System.out.println("Tree SHA-1: " + BlobUtils.toHexSHA(sha));

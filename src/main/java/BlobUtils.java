@@ -6,12 +6,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
+
 public class BlobUtils {
-
-    private BlobUtils() {
-        throw new IllegalStateException("Utility class");
-    }
-
     public static byte[] createBlobObject(String filePath) {
         try {
             File file = new File(filePath);
@@ -64,24 +60,4 @@ public class BlobUtils {
         }
         return sha;
     }
-
-    /*
-
-    Git Object : Content addressable filesystem. The name of file as stored by Git are
-    mathematically derived from their contents. The implication of this is that a change of
-    single byte in the content would change the name of the object.
-
-    Files are not modified rather they are created and put in different location.
-
-    */
-
-    /*
-        There are two major types of git objects -> Blob object abd Tree object.
-
-        With respect to Blob object, there are two low level commands -> hash-object and cat-file
-
-        1. git cat-file prints an existing git object to the standard output
-        2. hash-object converts an existing file into a git object
-
-    */
 }
