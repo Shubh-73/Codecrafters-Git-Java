@@ -80,8 +80,7 @@ public class TreeGitUtils {
         return null;
     }
 
-    public static void readTree(String[] argv) throws IOException {
-        String treeSha = argv[1];
+    public static void readTree(String treeSha, boolean nameOnly) throws IOException {
         String treeDirectory = treeSha.substring(0, 2);
         String treeHash = treeSha.substring(2);
         String filePath = ".git/objects/" + treeDirectory + "/" + treeHash;
@@ -97,7 +96,6 @@ public class TreeGitUtils {
                 }
             }
             StringBuilder content = new StringBuilder();
-            boolean firstFlag = true;
             while ((data = bufferedReader.read()) != -1) {
                 content.append((char) data);
             }
@@ -108,7 +106,13 @@ public class TreeGitUtils {
                 String[] res = splitByMode.split("\0");
                 String trimmedData = res[0];
 
-                if (!trimmedData.isBlank()) treeContent.add(trimmedData);
+                if (!trimmedData.isBlank()) {
+                    if (nameOnly) {
+                        treeContent.add(trimmedData);
+                    } else {
+                        treeContent.add(splitByMode);
+                    }
+                }
             }
 
             bufferedReader.close();

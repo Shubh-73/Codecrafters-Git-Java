@@ -32,7 +32,16 @@ public class Main {
        }
        case "ls-tree" -> {
 
-         TreeGitUtils.readTree(args);
+         boolean nameOnly = false;
+         String treeSha = "";
+         for (String arg : args) {
+           if (arg.equals("--name-only")) {
+             nameOnly = true;
+           } else if (!arg.equals("ls-tree")) {
+             treeSha = arg;
+           }
+         }
+         TreeGitUtils.readTree(treeSha, nameOnly);
 
        }
        case "write-tree" -> {
