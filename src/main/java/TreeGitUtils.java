@@ -97,7 +97,7 @@ public class TreeGitUtils {
 
     }
 
-    private static byte[] writeTree(File dir) {
+    public static byte[] writeTree(File dir) {
 
         try {
 

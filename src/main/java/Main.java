@@ -36,7 +36,8 @@ public class Main {
 
        }
        case "write-tree" -> {
-
+          byte[] sha = TreeGitUtils.writeTree(new File("."));
+          System.out.println(TreeGitUtils.toHexSHA(sha));
 
 
        }
