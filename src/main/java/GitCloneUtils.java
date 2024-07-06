@@ -79,6 +79,12 @@ public class GitCloneUtils {
             // Construct request body for Git clone
             OutputStream out = connection.getOutputStream();
             String request = "001e" + gitProtocolInfo.substring(4) + "0000";
+
+            // Ensure the request string has an even number of characters
+            if (request.length() % 2 != 0) {
+                throw new IllegalArgumentException("Hex string must have even number of characters");
+            }
+
             out.write(hexStringToByteArray(request));
             out.flush();
             out.close();
