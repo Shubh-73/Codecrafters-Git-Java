@@ -73,18 +73,12 @@ public class GitCloneUtils {
             connection.setRequestProperty("User-Agent", "GitCloneClient");
             connection.setRequestProperty("Content-Type", "application/x-git-upload-pack-request");
 
-            // Set this to true to enable output (POST data)
+            // Enable output for POST requests
             connection.setDoOutput(true);
 
             // Construct request body for Git clone
             OutputStream out = connection.getOutputStream();
             String request = "001e" + gitProtocolInfo.substring(4) + "0000";
-
-            // Ensure the request string has an even number of characters
-            if (request.length() % 2 != 0) {
-                request += "0"; // Add an extra '0' to make the length even
-            }
-
             out.write(hexStringToByteArray(request));
             out.flush();
             out.close();
@@ -118,10 +112,10 @@ public class GitCloneUtils {
     }
 
     private static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        if (len % 2 != 0) {
+        if (s.length() % 2 != 0) {
             throw new IllegalArgumentException("Hex string must have even number of characters");
         }
+        int len = s.length();
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
             data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
