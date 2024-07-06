@@ -70,6 +70,16 @@ public class Main {
           System.err.println("Failed to create commit object.");
         }
       }
+      case "clone" ->{
+        if (args.length < 3) {
+          System.err.println("Usage: ./your_git.sh clone <repository_url> <target_directory>");
+          return;
+        }
+        String repoUrl = args[1];
+        String targetDir = args[2];
+        GitCloneUtils.cloneRepository(repoUrl, targetDir);
+        break;
+      }
       default -> System.out.println("Unknown command: " + command);
     }
   }
