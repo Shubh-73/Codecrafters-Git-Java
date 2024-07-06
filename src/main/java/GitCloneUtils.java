@@ -32,8 +32,8 @@ public class GitCloneUtils {
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 // Read response to get Git protocol info
                 BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String line;
                 StringBuilder gitProtocolInfoBuilder = new StringBuilder();
+                String line;
                 while ((line = reader.readLine()) != null) {
                     gitProtocolInfoBuilder.append(line).append("\n");
                 }
