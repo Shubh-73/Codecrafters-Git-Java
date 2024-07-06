@@ -38,7 +38,7 @@ public class Main {
        case "write-tree" -> {
 
 
-         String treeSha = TreeGitUtils.writeTree(args[1]);
+         String treeSha = TreeGitUtils.writeTree(args[0]);
          System.out.println(treeSha);
        }
 
