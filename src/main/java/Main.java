@@ -43,6 +43,33 @@ public class Main {
           System.out.println( BlobUtils.toHexSHA(sha));
         }
       }
+      case "commit-tree" -> {
+        String treeSha = args[1];
+        String parentSha = null;
+        String message = null;
+        String authorName = "Your Name";
+        String authorEmail = "you@example.com";
+
+        for (int i = 2; i < args.length; i++) {
+          if (args[i].equals("-p")) {
+            parentSha = args[i + 1];
+          } else if (args[i].equals("-m")) {
+            message = args[i + 1];
+          }
+        }
+
+        if (message == null) {
+          System.err.println("Commit message is required");
+          return;
+        }
+
+        byte[] sha = CommitUtils.createCommitObject(treeSha, parentSha, message, authorName, authorEmail);
+        if (sha != null) {
+          System.out.println(BlobUtils.toHexSHA(sha));
+        } else {
+          System.err.println("Failed to create commit object.");
+        }
+      }
       default -> System.out.println("Unknown command: " + command);
     }
   }
