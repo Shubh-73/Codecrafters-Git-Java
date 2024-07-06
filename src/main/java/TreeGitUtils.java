@@ -1,12 +1,14 @@
 import javax.print.DocFlavor;
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HexFormat;
-import java.util.List;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.zip.InflaterInputStream;
+import java.util.zip.*;
+import java.nio.file.*;
+
+import static java.lang.Long.compress;
 
 public class TreeGitUtils {
 
@@ -93,6 +95,75 @@ public class TreeGitUtils {
 
 
     }
+
+    public static String writeTree(String directory) throws IOException {
+        List<Map.Entry<String, String>> entries = new ArrayList<>();
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(directory))) {
+            for (Path entry : stream) {
+                String name = entry.getFileName().toString();
+                if (name.equals(".git")) continue;
+
+                String fullPath = entry.toString();
+                String mode = Files.isDirectory(entry) ? "40000" : "100644";
+                String sha1Hash = Files.isDirectory(entry) ? writeTree(fullPath) : BlobUtils.createBlobObject(fullPath);
+
+                if (!sha1Hash.isEmpty()) {
+                    entries.add(new AbstractMap.SimpleEntry<>(name, mode + " " + name + '\0' + BlobUtils.hexToBinary(sha1Hash)));
+                }
+            }
+        }
+
+        entries.sort(Map.Entry.comparingByKey());
+
+        StringBuilder treeContent = new StringBuilder();
+        for (Map.Entry<String, String> entry : entries) {
+            treeContent.append(entry.getValue());
+        }
+
+        String store = "tree " + treeContent.length() + '\0' + treeContent;
+        String treeSha1 = sha1(store);
+        String objPath = ".git/objects/" + treeSha1.substring(0, 2) + "/" + treeSha1.substring(2);
+
+        Path objDir = Paths.get(objPath).getParent();
+        if (objDir != null && !Files.exists(objDir)) {
+            Files.createDirectories(objDir);
+        }
+
+        try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(Paths.get(objPath)))) {
+            out.write(compress(store));
+        }
+
+        return treeSha1;
+    }
+
+    private static String sha1(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            byte[] hash = md.digest(input.getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    private static byte[] compress(String str) throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             DeflaterOutputStream dos = new DeflaterOutputStream(bos)) {
+            dos.write(str.getBytes());
+            dos.finish();
+            return bos.toByteArray();
+        }
+    }
+
+
+
+
 
 
 }

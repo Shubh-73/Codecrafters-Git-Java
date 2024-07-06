@@ -11,7 +11,7 @@ public class BlobUtils {
         throw new IllegalStateException("Utility class");
     }
 
-    public static void createBlobObject(String filePath){
+    public static String createBlobObject(String filePath){
         try{
             File fileToStore = new File(filePath);
             String contentOfFile = Files.readString(fileToStore.toPath());
@@ -44,16 +44,17 @@ public class BlobUtils {
             blobFile.createNewFile();
             Files.write(blobFile.toPath(), output);
             System.out.println(blobHash);
+            return blobHash;
 
         }
         catch (IOException | NoSuchAlgorithmException e){
 
             e.printStackTrace();
-
+            return null;
         }
     }
 
-    private static String bytesToHex(byte[] hash) {
+    public static String bytesToHex(byte[] hash) {
         StringBuilder hexString = new StringBuilder(2 * hash.length);
         for(byte b : hash) {
             String hex = Integer.toHexString(0xff & b);
@@ -62,6 +63,20 @@ public class BlobUtils {
 
         }
         return hexString.toString();
+    }
+
+    public static String hexToBinary(String hex){
+        StringBuilder binary  = new StringBuilder();
+
+        for(char hexChar : hex.toCharArray()){
+            String bin = Integer.toBinaryString(Character.digit(hexChar, 16));
+
+            while (bin.length() < 4){
+                bin = "0" + bin;
+            }
+            binary.append(bin);
+        }
+        return binary.toString();
     }
 
     /*

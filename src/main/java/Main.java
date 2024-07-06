@@ -35,6 +35,15 @@ public class Main {
          TreeGitUtils.readTree(args);
 
        }
+       case "write-tree" -> {
+         if (args.length != 3){
+           System.out.println("Invalid number of arguments");
+           System.exit(1);
+         }
+
+         String treeSha = TreeGitUtils.writeTree(args[1]);
+         System.out.println(treeSha);
+       }
 
        default -> System.out.println("Unknown command: " + command);
      }
