@@ -19,6 +19,9 @@ public class GitPackUtils {
 
                 int totalObjects = readPackHeader(bis);
 
+                System.out.println("Pack file content: ");
+                printPackFileContent(bis, packFile.length());
+
                 for (int i = 0; i < totalObjects; i++) {
                     long objectOffset = readObjectHeader(bis);
                     extractObject(bis, targetDir, objectOffset);
@@ -89,5 +92,12 @@ public class GitPackUtils {
                 bos.write(buffer, 0, bytesRead);
             }
         }
+    }
+
+    private static void printPackFileContent(BufferedInputStream bis, long length) throws IOException {
+        byte[] content = new byte[(int) length];
+        bis.read(content);
+        System.out.println(new String(content));
+        bis.reset(); // Reset stream position after reading for further processing
     }
 }
